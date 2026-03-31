@@ -1,0 +1,28 @@
+# Client Excel files (portfolio data — do not commit)
+*.xlsx
+!upside_downside_mar.xlsx
+!M3 common scheme ISINs.xlsx
+
+# Output decks and client-specific files
+*.pptx
+!Template.pptx
+
+# Client documents
+*.docx
+*.pdf
+
+# Debug / scratch
+debug_ref.py
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude internal
+.claude/
