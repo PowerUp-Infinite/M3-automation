@@ -54,37 +54,43 @@ def _format_subcat_short(sub):
 TEMPLATE_PATH = r"C:\PowerUpInfinite\M3\Template.pptx"
 
 SUBCATEGORY_DISPLAY = {
-    'MID_CAP':                  'Mid Cap',
-    'SMALL_CAP':                'Small Cap',
-    'FLEXI_CAP':                'Flexi Cap',
-    'VALUE_AND_CONTRA':         'Value & Contra',
-    'LARGE_CAP':                'Large Cap',
-    'DYNAMIC_ASSET_ALLOCATION': 'Dynamic Asset',
-    'MULTI_ASSET_ALLOCATION':   'Multi Asset',
-    'AGGRESSIVE_ALLOCATION':    'Aggressive Hybrid',
-    'COMMODITY_GOLD':           'Gold',
-    'COMMODITY_SILVER':         'Silver',
-    'INDEX_LARGE_CAP':          'Index Large Cap',
-    'ELSS_TAX_SAVINGS':         'ELSS',
-    'LARGE_AND_MID_CAP':        'Large & Mid',
-    'FOCUSED_FUND':             'Focused',
+    'MID_CAP':                              'Mid Cap',
+    'SMALL_CAP':                            'Small Cap',
+    'FLEXI_CAP':                            'Flexi Cap',
+    'VALUE_AND_CONTRA':                     'Value & Contra',
+    'LARGE_CAP':                            'Large Cap',
+    'DYNAMIC_ASSET_ALLOCATION':             'Dynamic Asset',
+    'MULTI_ASSET_ALLOCATION':               'Multi Asset',
+    'AGGRESSIVE_ALLOCATION':                'Aggressive Hybrid',
+    'COMMODITY_GOLD':                       'Gold',
+    'COMMODITY_SILVER':                     'Silver',
+    'INDEX_LARGE_CAP':                      'Index Large Cap',
+    'ELSS_TAX_SAVINGS':                     'ELSS',
+    'LARGE_AND_MID_CAP':                    'Large & Mid',
+    'FOCUSED_FUND':                         'Focused',
+    'SECTORAL_THEMATIC_EXPORT_AND_SERVICES':'Sectoral Thematic',
+    'INDEX_MID_CAP':                        'Index Mid Cap',
+    'INDEX_SMALL_CAP':                      'Index Small Cap',
 }
 
 SUBCAT_SHORT = {
-    'MID_CAP':                  'Mid',
-    'SMALL_CAP':                'Small',
-    'FLEXI_CAP':                'Flexi',
-    'VALUE_AND_CONTRA':         'Value & Contra',
-    'LARGE_CAP':                'Large Cap',
-    'DYNAMIC_ASSET_ALLOCATION': 'Dynamic Asset',
-    'MULTI_ASSET_ALLOCATION':   'Multi Asset',
-    'COMMODITY_GOLD':           'Gold',
-    'COMMODITY_SILVER':         'Silver',
-    'INDEX_LARGE_CAP':          'Index Large Cap',
-    'ELSS_TAX_SAVINGS':         'ELSS',
-    'LARGE_AND_MID_CAP':        'Large & Mid',
-    'FOCUSED_FUND':             'Focused',
-    'AGGRESSIVE_ALLOCATION':    'Aggressive Hybrid',
+    'MID_CAP':                              'Mid',
+    'SMALL_CAP':                            'Small',
+    'FLEXI_CAP':                            'Flexi',
+    'VALUE_AND_CONTRA':                     'Value & Contra',
+    'LARGE_CAP':                            'Large Cap',
+    'DYNAMIC_ASSET_ALLOCATION':             'Dynamic Asset',
+    'MULTI_ASSET_ALLOCATION':               'Multi Asset',
+    'COMMODITY_GOLD':                       'Gold',
+    'COMMODITY_SILVER':                     'Silver',
+    'INDEX_LARGE_CAP':                      'Index Large Cap',
+    'ELSS_TAX_SAVINGS':                     'ELSS',
+    'LARGE_AND_MID_CAP':                    'Large & Mid',
+    'FOCUSED_FUND':                         'Focused',
+    'AGGRESSIVE_ALLOCATION':                'Aggressive Hybrid',
+    'SECTORAL_THEMATIC_EXPORT_AND_SERVICES':'Sectoral',
+    'INDEX_MID_CAP':                        'Index Mid',
+    'INDEX_SMALL_CAP':                      'Index Small',
 }
 
 RG_DISPLAY = {
@@ -1304,10 +1310,11 @@ def _build_scheme_slides(prs, groups, template_map, pct_key, ref_data, rr_catego
                                     run.text = run.text.replace('% Monthly Allocation', '% Allocation')
                                 elif '% Monthly' in run.text:
                                     run.text = run.text.replace('% Monthly', '% Allocation')
-                                    # Clear next paragraph if it's just "Allocation" (split across paras)
+                                    # Remove the next paragraph entirely if it's just "Allocation"
+                                    # (header split across two paras — deleting prevents blank line)
                                     if pi + 1 < len(paras) and paras[pi + 1].text.strip().lower() == 'allocation':
-                                        for r in paras[pi + 1].runs:
-                                            r.text = ''
+                                        orphan = paras[pi + 1]._p
+                                        orphan.getparent().remove(orphan)
 
         print(f"  Filled scheme slide for {rg!r}: {len(schemes)} schemes, {len(pages)} page(s)")
 
