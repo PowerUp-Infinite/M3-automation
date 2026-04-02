@@ -1161,6 +1161,12 @@ def _update_label_shape(shape, rg, schemes, pct_key):
         # Layout A: two separate paragraphs
         _set_para_text(paras[0], f"{label1} | {total_pct_str}%")
         _set_para_text(paras[1], line2)
+        # Remove any left-margin offset on paragraph 0 that causes the two lines
+        # to center at different horizontal positions (making the label look crooked)
+        pPr0 = paras[0]._p.find(f'{{{NS_A}}}pPr')
+        if pPr0 is not None and pPr0.get('marL'):
+            pPr0.attrib.pop('marL', None)
+            pPr0.attrib.pop('indent', None)
     elif len(paras) == 1:
         # Layout B: single paragraph, possibly with <a:br/> separating line1/line2
         para_xml = paras[0]._p
