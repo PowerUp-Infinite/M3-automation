@@ -1337,6 +1337,13 @@ def populate_sip_scheme_slides(prs, section4, ref_data, rr_category):
         sub = row.get('UPDATED_SUBCATEGORY', '')
         groups.setdefault(rg, OrderedDict()).setdefault(sub, []).append(row)
 
+    # Merge multi-folio rows: same fund → one slot, summed SIP amount and allocation %
+    for rg in groups:
+        for sub in groups[rg]:
+            groups[rg][sub] = _dedup_schemes_for_slide(
+                groups[rg][sub], [sip_amt_key, 'SIP Allocation %', 'SIP Amount']
+            )
+
     _build_scheme_slides(prs, groups, SIP_TEMPLATE, 'SIP Allocation %', ref_data, rr_category)
     print("  SIP scheme slides populated")
 
@@ -1354,6 +1361,14 @@ def populate_corpus_scheme_slides(prs, section4, ref_data, rr_category):
         rg = _normalize_rg(row.get('RISK_GROUP_L0', ''))
         sub = row.get('UPDATED_SUBCATEGORY', '')
         groups.setdefault(rg, OrderedDict()).setdefault(sub, []).append(row)
+
+    # Merge multi-folio rows: same fund (even with different actions) → one slot, summed allocation %
+    for rg in groups:
+        for sub in groups[rg]:
+            groups[rg][sub] = _dedup_schemes_for_slide(
+                groups[rg][sub],
+                [corpus_pct_key, 'Total Value as % of PF', 'Total Allocation % of PF']
+            )
 
     _build_scheme_slides(prs, groups, CORPUS_TEMPLATE, corpus_pct_key, ref_data, rr_category)
     print("  Corpus scheme slides populated")
@@ -1528,6 +1543,7 @@ def _dedup_by_fund(rows, value_keys):
     """
     Merge rows that share the same FUND_NAME and Action (e.g. same fund held in two folios).
     Sums numeric value columns; keeps first row's other fields.
+    Used for action slides — same fund + same action across multiple folios → one row.
     """
     seen = {}
     order = []
@@ -1541,6 +1557,29 @@ def _dedup_by_fund(rows, value_keys):
                 for col in [vk, vk + ' Amount', vk.replace(' Amount', '')]:
                     if col in row and row[col]:
                         seen[key][col] = (seen[key].get(col) or 0) + (row[col] or 0)
+    return [seen[k] for k in order]
+
+
+def _dedup_schemes_for_slide(rows, value_keys):
+    """
+    Merge rows that share the same FUND_NAME for corpus/SIP scheme slides.
+    A fund may have multiple rows because of:
+      (a) multiple folios (same action), OR
+      (b) different actions (e.g. Retain existing + Buy More / Fresh Buy).
+    On scheme slides the fund should appear exactly ONCE with summed allocation values.
+    Sums all columns listed in value_keys; keeps first row's other fields (ISIN, RISK_GROUP, etc.).
+    """
+    seen = {}
+    order = []
+    for row in rows:
+        key = row.get('FUND_NAME', '')
+        if key not in seen:
+            seen[key] = dict(row)
+            order.append(key)
+        else:
+            for vk in value_keys:
+                if vk in row and row[vk]:
+                    seen[key][vk] = (seen[key].get(vk) or 0) + (row[vk] or 0)
     return [seen[k] for k in order]
 
 
