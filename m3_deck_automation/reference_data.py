@@ -10,10 +10,17 @@ import pandas as pd
 
 
 def _norm_name(name):
-    """Normalize fund name for fuzzy matching: lowercase, strip 'Fund'/'Fd', collapse spaces."""
+    """Normalize fund name for fuzzy matching.
+    Strips 'Fund'/'Fd', lowercases, collapses spaces, and normalises
+    common spelling variants (e.g. 'Smallcap' <-> 'Small Cap').
+    """
     s = str(name).strip().lower()
     s = re.sub(r'\bfund\b', '', s)
-    s = re.sub(r'\bfd\b', '', s)      # AUM file abbreviates 'Fund' as 'Fd' in some names
+    s = re.sub(r'\bfd\b', '', s)       # AUM file abbreviates 'Fund' as 'Fd'
+    # Normalise compound-cap words so both spellings resolve to the same token
+    s = s.replace('smallcap', 'small cap')
+    s = s.replace('midcap',   'mid cap')
+    s = s.replace('largecap', 'large cap')
     s = re.sub(r'\s+', ' ', s).strip()
     return s
 
