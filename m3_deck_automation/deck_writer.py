@@ -1068,12 +1068,11 @@ def _fill_slot(slot, scheme, pct_key, ref_data, rr_category):
     fund_name_key = (scheme.get('FUND_NAME') or '').strip()
 
     if isin:
-        # Cross-validate: check what fund this ISIN belongs to in the reference data.
-        # If it maps to a completely different fund, the Excel ISIN is scrambled — fall back to name.
+        # Use ISIN directly — it is the authoritative identifier.
+        # Name mismatches (typos, missing words) are common in client files; ignore them.
         isin_ref_name = ref_data.get('_isin_to_name', {}).get(isin, '')
         if isin_ref_name and _norm_name(isin_ref_name) != _norm_name(fund_name_key):
-            print(f"    ISIN mismatch: {isin} maps to {isin_ref_name!r}, expected {fund_name_key!r} — using name lookup")
-            isin = None
+            print(f"    ISIN used (name variant): {fund_name_key!r} -> {isin_ref_name!r}")
 
     if not isin:
         # Resolve by fund name (exact, then normalized)

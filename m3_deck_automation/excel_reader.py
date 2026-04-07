@@ -142,8 +142,76 @@ def _read_isin_column(ws, count):
     return isins
 
 
+def _get_masterplan_sheet(wb):
+    """Return the PF_MasterPlan_* sheet if present, else None."""
+    for name in wb.sheetnames:
+        if name.startswith('PF_MasterPlan'):
+            return wb[name]
+    return None
+
+
+def _read_masterplan(ws):
+    """
+    Read the PF_MasterPlan_* sheet and return an excel_data dict compatible
+    with what read_excel() produces for the old PF_Curation format.
+
+    Sheet layout:
+      Row 1 — title "Master Transition Plan"
+      Row 2 — "PFV:" | <value>
+      Row 3 — blank
+      Row 4 — column headers (FUND_NAME, FOLIO_NUMBER, ISIN, …)
+      Row 5+ — data rows (last row is Grand Total)
+
+    Returns dict with section1/section2/section3/section4.
+    ISIN is already a column in this sheet — no separate lookup needed.
+    section2 and section3 are returned empty (not needed for this format).
+    """
+    all_rows = list(ws.iter_rows(values_only=True))
+
+    # PFV from row 2 col B
+    pfv = all_rows[1][1] if len(all_rows) > 1 and len(all_rows[1]) > 1 else 0
+    pfv = pfv or 0
+
+    # Headers at row 4 (index 3)
+    header = all_rows[3]
+    cmap = col_map(header)
+
+    # Data rows from row 5 onwards; stop at first fully-blank row (col A None)
+    section4 = []
+    for row in all_rows[4:]:
+        a = row[0] if row else None
+        if a is None:
+            break
+        record = {}
+        for name, idx in cmap.items():
+            record[name] = row[idx] if idx < len(row) else None
+        label = str(a).strip().lower()
+        if 'grand total' in label:
+            record['__grand_total__'] = True
+        section4.append(record)
+
+    # section1 — only needs Grand Total with Total Selected Value for PFV
+    section1 = [{'Total Selected Value': pfv, '__grand_total__': True}]
+
+    non_gt = [r for r in section4 if not r.get('__grand_total__')]
+    print(f"  MasterPlan format detected: {len(non_gt)} data rows, PFV={pfv:,.0f}")
+    return {
+        'section1': section1,
+        'section2': [],
+        'section3': [],
+        'section4': section4,
+    }
+
+
 def read_excel(excel_path):
     wb = openpyxl.load_workbook(excel_path, data_only=True)
+
+    # New format: PF_MasterPlan_* sheet takes priority
+    mp_ws = _get_masterplan_sheet(wb)
+    if mp_ws is not None:
+        return _read_masterplan(mp_ws)
+
+    # Old format: PF_Curation_* sheet
     ws = get_curation_sheet(wb)
     sections = detect_sections(ws)
 
