@@ -1353,7 +1353,7 @@ def populate_sip_scheme_slides(prs, section4, ref_data, rr_category):
     for rg in groups:
         for sub in groups[rg]:
             groups[rg][sub] = _dedup_schemes_for_slide(
-                groups[rg][sub], [sip_amt_key, 'SIP Allocation %', 'SIP Amount']
+                groups[rg][sub], list(dict.fromkeys([sip_amt_key, 'SIP Allocation %', 'SIP Amount']))
             )
 
     _build_scheme_slides(prs, groups, SIP_TEMPLATE, 'SIP Allocation %', ref_data, rr_category)
@@ -1379,7 +1379,7 @@ def populate_corpus_scheme_slides(prs, section4, ref_data, rr_category):
         for sub in groups[rg]:
             groups[rg][sub] = _dedup_schemes_for_slide(
                 groups[rg][sub],
-                [corpus_pct_key, 'Total Value as % of PF', 'Total Allocation % of PF']
+                list(dict.fromkeys([corpus_pct_key, 'Total Value as % of PF', 'Total Allocation % of PF']))
             )
 
     _build_scheme_slides(prs, groups, CORPUS_TEMPLATE, corpus_pct_key, ref_data, rr_category)
